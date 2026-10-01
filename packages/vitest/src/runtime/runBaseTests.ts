@@ -11,6 +11,7 @@ import { detectAsyncLeaks } from './detect-async-leaks'
 import { closeInspector } from './inspector'
 import { collectTests, startTests } from './runner/run'
 import { resolveTestRunner } from './runners'
+import { setupEnv } from './setup-common'
 import { setupGlobalEnv } from './setup-node'
 import { getWorkerState, resetModules } from './utils'
 
@@ -54,6 +55,10 @@ export async function run(
           moduleRunner.mocker?.reset()
           resetModules(workerState.evaluatedModules, true)
         }
+
+        // `test.env` is applied before every file, so reused workers
+        // (isolate: false) don't leak `process.env` mutations between files.
+        setupEnv(config.env, workerState.metaEnv)
 
         workerState.filepath = file.filepath
 

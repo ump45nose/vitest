@@ -16,7 +16,7 @@ import { detectAsyncLeaks } from './detect-async-leaks'
 import { closeInspector } from './inspector'
 import { collectTests, startTests } from './runner/run'
 import { resolveTestRunner } from './runners'
-import { setupCommonEnv } from './setup-common'
+import { setupCommonEnv, setupEnv } from './setup-common'
 import { getWorkerState } from './utils'
 
 export async function run(
@@ -100,6 +100,10 @@ export async function run(
   try {
     await traces.$(`vitest.test.runner.${method}`, async () => {
       for (const file of files) {
+        // `test.env` is applied before every file, so reused workers
+        // (isolate: false) don't leak `process.env` mutations between files.
+        setupEnv(config.env, workerState.metaEnv)
+
         workerState.filepath = file.filepath
 
         if (method === 'run') {
